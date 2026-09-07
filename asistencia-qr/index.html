@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Asistencia EPT - Grocio Prado</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        :root {
+            --primary-color: #002D62;
+            --accent-color: #FFD700;
+            --bg-color: #f4f7fb;
+            --card-bg: rgba(255, 255, 255, 0.94);
+        }
+
+        body { 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            margin: 0; 
+            background-color: var(--bg-color); 
+            background-image: linear-gradient(rgba(244, 247, 251, 0.93), rgba(244, 247, 251, 0.93)), url('logo.jpg'); 
+            background-size: 550px; /* Insignia de fondo más grande y sutil */
+            background-repeat: no-repeat;
+            background-position: center 60%;
+            background-attachment: fixed;
+            text-align: center; 
+            color: #2c3e50; 
+        }
+        
+        /* Cabecera institucional elegante */
+        header { 
+            background: linear-gradient(135deg, #002D62, #001a38); 
+            color: var(--accent-color); 
+            padding: 18px 30px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 5px solid var(--accent-color); 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        header h1 { margin: 0; font-size: 24px; color: var(--accent-color); text-shadow: 1px 1px 3px rgba(0,0,0,0.4); font-weight: 700; letter-spacing: 0.5px; }
+        
+        /* Logo superior más grande y sin recuadros */
+        .logo-colegio { 
+            height: 75px; 
+            width: auto; 
+            background: transparent; 
+            object-fit: contain;
+            filter: drop-shadow(0 2px 5px rgba(0,0,0,0.3));
+        }
+
+        .container { padding: 35px 20px; max-width: 1200px; margin: auto; }
+        
+        /* Botones principales estilo profesional */
+        .btn-principal { 
+            background: linear-gradient(135deg, #FFD700, #e6c200); 
+            color: #002D62; 
+            font-weight: bold; 
+            border: none; 
+            padding: 14px 28px; 
+            font-size: 16px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            margin-bottom: 25px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: all 0.25s ease;
+        }
+        .btn-principal:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.15); background: linear-gradient(135deg, #ffde1a, #f0cc00); }
+
+        /* Tarjetas de clases estilo glassmorphism */
+        .clases-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 25px; margin-top: 20px; }
+        .clase-card { 
+            background: var(--card-bg); 
+            backdrop-filter: blur(8px);
+            width: 290px; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08); 
+            overflow: hidden; 
+            text-align: left; 
+            border-top: 6px solid var(--primary-color); 
+            transition: transform 0.25s ease, box-shadow 0.25s ease; 
+        }
+        .clase-card:hover { transform: translateY(-6px); box-shadow: 0 12px 25px rgba(0,0,0,0.12); }
+        .clase-header { padding: 20px; background: rgba(248, 249, 250, 0.6); border-bottom: 1px solid #eaeaea; display: flex; justify-content: space-between; align-items: flex-start; }
+        .clase-header h3 { margin: 0 0 5px 0; color: var(--primary-color); font-size: 19px; }
+        .clase-body { padding: 20px; font-size: 14px; color: #555; }
+        
+        .btn-eliminar-clase { background: #e74c3c; color: white; border: none; padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; transition: background 0.2s; }
+        .btn-eliminar-clase:hover { background: #c0392b; }
+
+        /* Vista interna de la clase */
+        #vista-clase { 
+            display: none; 
+            text-align: left; 
+            width: 95%; 
+            max-width: 1100px;
+            margin: 20px auto; 
+            background: var(--card-bg); 
+            backdrop-filter: blur(10px);
+            padding: 35px; 
+            border-radius: 14px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+            border-top: 8px solid var(--primary-color); 
+        }
+        .btn-regresar { background-color: #7f8c8d; color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; margin-bottom: 25px; font-weight: 600; transition: background 0.2s; }
+        .btn-regresar:hover { background-color: #6c7a89; }
+        
+        /* Contenedores de formularios y paneles */
+        .form-box { background: #ffffff; padding: 25px; margin-bottom: 25px; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+        .form-box input, .form-box select { width: 100%; padding: 11px; margin: 6px 0 16px 0; box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
+        .btn-registrar { background-color: var(--primary-color); color: var(--accent-color); font-weight: bold; border: none; padding: 12px; border-radius: 6px; cursor: pointer; width: 100%; font-size: 15px; transition: background 0.2s; }
+        .btn-registrar:hover { background-color: #001f3f; }
+
+        /* Panel específico del Profesor para escaneo móvil */
+        .panel-profesor {
+            background: linear-gradient(135deg, #f8fafc, #edf2f7);
+            border: 2px solid var(--primary-color);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.06);
+        }
+        .info-box { background: #ffffff; padding: 18px; margin: 15px auto; width: 90%; max-width: 450px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); border: 2px solid var(--accent-color); text-align: center; }
+        
+        .nombre-link { color: var(--primary-color); cursor: pointer; text-decoration: underline; font-weight: bold; }
+        .nombre-link:hover { color: #001f3f; }
+
+        /* Tablas adaptables y profesionales */
+        .table-responsive { width: 100%; overflow-x: auto; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; min-width: 700px; }
+        th, td { border: 1px solid #e2e8f0; padding: 12px 14px; text-align: center; font-size: 13px; }
+        th { background-color: var(--primary-color); color: var(--accent-color); font-weight: 600; }
+
+        #reader { width: 100%; max-width: 380px; margin: 20px auto; background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 1px solid #cbd5e1; }
+        #reader button { background-color: var(--primary-color) !important; color: var(--accent-color) !important; border: none !important; padding: 10px 16px !important; border-radius: 6px !important; font-weight: bold !important; cursor: pointer !important; margin: 6px !important; }
+        #reader button:hover { background-color: #001f3f !important; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Control de Asistencia - EPT</h1>
+        <!-- Insignia superior grande y limpia -->
+        <img src="logo.jpg" alt="Insignia Colegio Grocio Prado" class="logo-colegio">
+    </header>
+
+    <div class="container">
+        <!-- Vista Inicial -->
+        <div id="vista-inicio">
+            <button class="btn-principal" onclick="crearSeccion()">+ Crear Grado y Sección</button>
+            <h2 style="color: var(--primary-color); margin-bottom: 5px;">Mis Clases Registradas</h2>
+            <div style="width: 70px; height: 4px; background-color: var(--accent-color); margin: 0 auto 25px auto; border-radius: 2px;"></div>
+            <div class="clases-container" id="contenedor-clases"></div>
+        </div>
+
+        <!-- Vista de la Clase Seleccionada -->
+        <div id="vista-clase">
+            <button class="btn-regresar" onclick="volverAInicio()">⬅ Volver a Mis Clases</button>
+            <h2 id="titulo-clase-actual" style="color: var(--primary-color); margin-top: 0;"></h2>
+
+            <!-- PANEL DEL PROFESOR (Optimizado para Celular y Escaneo en Vivo) -->
+            <div class="panel-profesor">
+                <h3 style="margin-top:0; color: var(--primary-color); text-align: center; font-size: 20px;">📱 Panel de Escaneo del Profesor</h3>
+                <p style="text-align: center; color: #64748b; font-size: 14px; margin-top: -5px;">Escanee el carnet o código QR del alumno para registrar automáticamente su asistencia con día y hora.</p>
+                
+                <div class="info-box">
+                    <h4 id="resultado" style="color: var(--primary-color); margin:0; font-size: 16px;">Esperando escaneo de carnet...</h4>
+                </div>
+                
+                <div id="reader"></div>
+            </div>
+
+            <hr style="margin: 35px 0; border:0; border-top: 1px solid #cbd5e1;">
+
+            <!-- Formulario de Registro de Alumnos -->
+            <div class="form-box">
+                <h3 style="margin-top:0; color: var(--primary-color);">Registrar Nuevo Alumno en esta Clase</h3>
+                <label><b>DNI / Código QR (Exactamente 8 dígitos):</b></label>
+                <input type="text" id="reg-codigo" placeholder="Ej: 74859612" maxlength="8">
+                
+                <label><b>Nombre y Apellido del Alumno:</b></label>
+                <input type="text" id="reg-nombre" placeholder="Ej: María López">
+
+                <label><b>Turno:</b></label>
+                <select id="reg-turno">
+                    <option value="Mañana">Mañana</option>
+                    <option value="Tarde">Tarde</option>
+                </select>
+
+                <label><b>Nombre del Padre / Apoderado:</b></label>
+                <input type="text" id="reg-padre" placeholder="Ej: Carlos López">
+                
+                <label><b>Celular del Padre / Apoderado (9 dígitos, empieza con 9):</b></label>
+                <input type="text" id="reg-celular" placeholder="Ej: 988776655" maxlength="9">
+                
+                <button class="btn-registrar" onclick="registrarAlumnoEnClase()">Guardar Alumno y Generar QR</button>
+            </div>
+
+            <h3 style="color: var(--primary-color); margin-top: 35px;">Alumnos Matriculados e Historial</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>DNI / QR</th>
+                            <th>Alumno</th>
+                            <th>Turno</th>
+                            <th>Padre / Apoderado</th>
+                            <th>Celular</th>
+                            <th>Asistencias Totales</th>
+                            <th>Estado Hoy</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-alumnos-clase"></tbody>
+                </table>
+            </div>
+
+            <h3 style="color: #64748b; margin-top: 40px;">Historial de Alumnos Retirados / Eliminados</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Alumno</th>
+                            <th>Turno</th>
+                            <th>Total de Asistencias Registradas</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-historial-eliminados"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let datosColegio = JSON.parse(localStorage.getItem('colegioEPT_v4')) || {};
+        let historialEliminados = JSON.parse(localStorage.getItem('historialEliminados_v4')) || {};
+
+        let claseActual = null;
+        let scannerActivo = null;
+
+        function mostrarClases() {
+            let contenedor = document.getElementById('contenedor-clases');
+            contenedor.innerHTML = "";
+
+            let hayClases = false;
+            for (let nombreClase in datosColegio) {
+                hayClases = true;
+                let totalAlumnos = Object.keys(datosColegio[nombreClase]).length;
+
+                let card = document.createElement('div');
+                card.className = "clase-card";
+                card.innerHTML = `
+                    <div class="clase-header" onclick="abrirClase('${nombreClase}')" style="cursor:pointer;">
+                        <div>
+                            <h3>${nombreClase}</h3>
+                            <p style="margin:0; font-size: 12px; color: #64748b;">EPT - Secundaria</p>
+                        </div>
+                    </div>
+                    <div class="clase-body" onclick="abrirClase('${nombreClase}')" style="cursor:pointer;">
+                        <b>${totalAlumnos}</b> alumnos matriculados
+                    </div>
+                    <div style="padding: 0 20px 20px 20px; text-align: right;">
+                        <button class="btn-eliminar-clase" onclick="event.stopPropagation(); eliminarClase('${nombreClase}')">Eliminar Clase</button>
+                    </div>
+                `;
+                contenedor.appendChild(card);
+            }
+
+            if (!hayClases) {
+                contenedor.innerHTML = "<p style='color: #64748b;'>No hay grados creados aún. Haz clic en '+ Crear Grado y Sección'.</p>";
+            }
+        }
+
+        function crearSeccion() {
+            let nombreSeccion = prompt("Escribe el nombre del Grado y Sección (Ej: 3ro Secundaria - B):");
+            if (!nombreSeccion) return;
+
+            nombreSeccion = nombreSeccion.trim();
+            if (datosColegio[nombreSeccion]) {
+                alert("Ese grado y sección ya existe.");
+                return;
+            }
+
+            datosColegio[nombreSeccion] = {};
+            localStorage.setItem('colegioEPT_v4', JSON.stringify(datosColegio));
+            mostrarClases();
+        }
+
+        function eliminarClase(nombreClase) {
+            if (confirm(`¿Estás seguro de eliminar completamente la clase "${nombreClase}"?`)) {
+                delete datosColegio[nombreClase];
+                localStorage.setItem('colegioEPT_v4', JSON.stringify(datosColegio));
+                mostrarClases();
+            }
+        }
+
+        function abrirClase(nombreClase) {
+            claseActual = nombreClase;
+            document.getElementById('vista-inicio').style.display = "none";
+            document.getElementById('vista-clase').style.display = "block";
+            document.getElementById('titulo-clase-actual').innerText = "Clase: " + nombreClase;
+
+            cargarTablaAlumnos();
+            cargarHistorialEliminados();
+            iniciarEscanner();
+        }
+
+        function volverAInicio() {
+            if (scannerActivo) {
+                scannerActivo.clear().catch(error => console.error(error));
+            }
+            claseActual = null;
+            document.getElementById('vista-clase').style.display = "none";
+            document.getElementById('vista-inicio').style.display = "block";
+            mostrarClases();
+        }
+
+        function cargarTablaAlumnos() {
+            let tbody = document.getElementById('tabla-alumnos-clase');
+            tbody.innerHTML = "";
+
+            let alumnos = datosColegio[claseActual];
+            let hayAlumnos = false;
+
+            for (let codigo in alumnos) {
+                hayAlumnos = true;
+                let al = alumnos[codigo];
+                let colorEstado = al.estado === "Presente" ? "#27ae60" : "#c0392b";
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td><b>${codigo}</b></td>
+                        <td><span class="nombre-link" onclick="verFechasAsistencia('${codigo}')" title="Haz clic para ver los días y horas que asistió">${al.nombre}</span></td>
+                        <td>${al.turno || 'Mañana'}</td>
+                        <td>${al.padre}</td>
+                        <td>${al.celular}</td>
+                        <td><b>${(al.fechasAsistencia || []).length}</b> veces</td>
+                        <td style="color: ${colorEstado}; font-weight: bold;">${al.estado}</td>
+                        <td>
+                            <button style="background:#7f8c8d; color:white; border:none; padding:5px 8px; border-radius:4px; cursor:pointer; font-size:11px; margin:2px;" onclick="verQR('${codigo}', '${al.nombre}')">Ver QR</button>
+                            <button style="background:#27ae60; color:white; border:none; padding:5px 8px; border-radius:4px; cursor:pointer; font-size:11px; margin:2px;" onclick="enviarMensaje('${al.celular}', '${al.nombre}', '${claseActual}')">Aviso</button>
+                            <button style="background:#c0392b; color:white; border:none; padding:5px 8px; border-radius:4px; cursor:pointer; font-size:11px; margin:2px;" onclick="eliminarAlumno('${codigo}')">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+            }
+
+            if (!hayAlumnos) {
+                tbody.innerHTML = `<tr><td colspan="8" style="color: #64748b;">No hay alumnos registrados en esta clase todavía.</td></tr>`;
+            }
+        }
+
+        function cargarHistorialEliminados() {
+            let tbody = document.getElementById('tabla-historial-eliminados');
+            tbody.innerHTML = "";
+
+            let eliminados = historialEliminados[claseActual] || [];
+            if (eliminados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="3" style="color: #64748b;">No hay registros de alumnos retirados.</td></tr>`;
+                return;
+            }
+
+            eliminados.forEach(item => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${item.nombre}</td>
+                        <td>${item.turno || 'Mañana'}</td>
+                        <td><b>${item.asistenciasTotales}</b> asistencias acumuladas</td>
+                    </tr>
+                `;
+            });
+        }
+
+        function registrarAlumnoEnClase() {
+            let codigo = document.getElementById('reg-codigo').value.trim();
+            let nombre = document.getElementById('reg-nombre').value.trim();
+            let turno = document.getElementById('reg-turno').value;
+            let padre = document.getElementById('reg-padre').value.trim();
+            let celular = document.getElementById('reg-celular').value.trim();
+
+            if (!codigo || !nombre || !padre || !celular) {
+                alert("Por favor completa todos los campos.");
+                return;
+            }
+
+            if (codigo.length !== 8 || isNaN(codigo)) {
+                alert("El DNI / Código QR debe tener exactamente 8 dígitos numéricos.");
+                return;
+            }
+
+            let regexCelular = /^9\d{8}$/;
+            if (!regexCelular.test(celular)) {
+                alert("El número de celular del padre debe tener exactamente 9 dígitos y empezar obligatoriamente con el número 9.");
+                return;
+            }
+
+            if (datosColegio[claseActual][codigo]) {
+                alert("Ya existe un alumno registrado con este DNI/Código en esta clase.");
+                return;
+            }
+
+            datosColegio[claseActual][codigo] = { 
+                nombre: nombre, 
+                turno: turno,
+                padre: padre, 
+                celular: celular, 
+                estado: "Faltó", 
+                fechasAsistencia: [] 
+            };
+            localStorage.setItem('colegioEPT_v4', JSON.stringify(datosColegio));
+
+            document.getElementById('reg-codigo').value = "";
+            document.getElementById('reg-nombre').value = "";
+            document.getElementById('reg-padre').value = "";
+            document.getElementById('reg-celular').value = "";
+
+            cargarTablaAlumnos();
+            alert("¡Alumno registrado con éxito!");
+        }
+
+        function eliminarAlumno(codigo) {
+            if (confirm("¿Estás seguro de eliminar este alumno? Sus datos de padre y celular se borrarán, pero su historial total de asistencias quedará guardado.")) {
+                let alumno = datosColegio[claseActual][codigo];
+
+                if (!historialEliminados[claseActual]) {
+                    historialEliminados[claseActual] = [];
+                }
+                historialEliminados[claseActual].push({
+                    nombre: alumno.nombre,
+                    turno: alumno.turno,
+                    asistenciasTotales: (alumno.fechasAsistencia || []).length
+                });
+                localStorage.setItem('historialEliminados_v4', JSON.stringify(historialEliminados));
+
+                delete datosColegio[claseActual][codigo];
+                localStorage.setItem('colegioEPT_v4', JSON.stringify(datosColegio));
+
+                cargarTablaAlumnos();
+                cargarHistorialEliminados();
+            }
+        }
+
+        function verQR(codigo, nombre) {
+            let urlQR = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${codigo}`;
+            let ventana = window.open("", "_blank", "width=300,height=350");
+            ventana.document.write(`
+                <h3 style="font-family:Arial; text-align:center; color:#002D62;">Carnet de ${nombre}</h3>
+                <div style="text-align:center;">
+                    <img src="${urlQR}" alt="QR Alumno">
+                    <p style="font-family:Arial;">DNI/Código: <b>${codigo}</b></p>
+                </div>
+            `);
+        }
+
+        function verFechasAsistencia(codigo) {
+            let al = datosColegio[claseActual][codigo];
+            let fechas = al.fechasAsistencia || [];
+            
+            let ventana = window.open("", "_blank", "width=420,height=480");
+            let listaHTML = fechas.length > 0 ? fechas.map(f => `<li style="margin-bottom:6px;">${f}</li>`).join('') : "<li>No registra asistencias todavía.</li>";
+            
+            ventana.document.write(`
+                <div style="font-family:Arial; padding: 20px; color:#333;">
+                    <h3 style="color:#002D62; margin-top:0;">Historial de Asistencias</h3>
+                    <p><b>Alumno:</b> ${al.nombre}</p>
+                    <p><b>Turno:</b> ${al.turno || 'Mañana'}</p>
+                    <p><b>Total de asistencias:</b> ${fechas.length}</p>
+                    <hr>
+                    <p><b>Días y horas de asistencia:</b></p>
+                    <ul style="padding-left: 20px;">${listaHTML}</ul>
+                </div>
+            `);
+        }
+
+        function enviarMensaje(numeroPadre, nombreAlumno, clase) {
+            let mensaje = `Estimado padre de familia, le informamos que el/la alumno(a) ${nombreAlumno} del grado ${clase} no ha asistido hoy a la clase de EPT.`;
+            let urlWp = `https://api.whatsapp.com/send?phone=51${numeroPadre}&text=${encodeURIComponent(mensaje)}`;
+            window.open(urlWp, '_blank');
+        }
+
+        function iniciarEscanner() {
+            const configQR = {
+                fps: 10,
+                qrbox: 250,
+                rememberLastUsedCamera: true
+            };
+
+            scannerActivo = new Html5QrcodeScanner("reader", configQR);
+            scannerActivo.render((decodedText) => {
+                let alumnos = datosColegio[claseActual];
+                if (alumnos[decodedText]) {
+                    if (alumnos[decodedText].estado !== "Presente") {
+                        alumnos[decodedText].estado = "Presente";
+                        
+                        let ahora = new Date();
+                        let fechaFormateada = ahora.toLocaleDateString() + " a las " + ahora.toLocaleTimeString();
+                        
+                        if (!alumnos[decodedText].fechasAsistencia) {
+                            alumnos[decodedText].fechasAsistencia = [];
+                        }
+                        alumnos[decodedText].fechasAsistencia.push(fechaFormateada);
+                        
+                        localStorage.setItem('colegioEPT_v4', JSON.stringify(datosColegio));
+                    }
+                    
+                    document.getElementById('resultado').innerHTML = `✅ <b>¡Asistencia Registrada!</b><br>${alumnos[decodedText].nombre}`;
+                    document.getElementById('resultado').style.color = "#27ae60";
+                    cargarTablaAlumnos();
+                } else {
+                    document.getElementById('resultado').innerHTML = `⚠️ <b>Código no válido para esta clase:</b><br>${decodedText}`;
+                    document.getElementById('resultado').style.color = "#e67e22";
+                }
+            }, (error) => {});
+        }
+
+        mostrarClases();
+    </script>
+</body>
+</html>
